@@ -4,7 +4,7 @@
 package provider
 
 import (
-	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -15,71 +15,103 @@ import (
 
 func TestAccExampleResource(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
-			// Create and Read testing
 			{
-				Config: testAccExampleResourceConfig("one"),
+				Config: `
+provider "faulty" {	
+  required_boolean = true
+}
+resource "faulty_example" "test" {
+  required_boolean = true
+}
+`,
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"scaffolding_example.test",
+						"faulty_example.test",
 						tfjsonpath.New("id"),
-						knownvalue.StringExact("example-id"),
+						knownvalue.NotNull(),
 					),
 					statecheck.ExpectKnownValue(
-						"scaffolding_example.test",
-						tfjsonpath.New("defaulted"),
-						knownvalue.StringExact("example value when not configured"),
-					),
-					statecheck.ExpectKnownValue(
-						"scaffolding_example.test",
-						tfjsonpath.New("configurable_attribute"),
-						knownvalue.StringExact("one"),
+						"faulty_example.test",
+						tfjsonpath.New("required_boolean"),
+						knownvalue.Bool(true),
 					),
 				},
 			},
-			// ImportState testing
 			{
-				ResourceName:      "scaffolding_example.test",
-				ImportState:       true,
-				ImportStateVerify: true,
-				// This is not normally necessary, but is here because this
-				// example code does not have an actual upstream service.
-				// Once the Read method is able to refresh information from
-				// the upstream service, this can be removed.
-				ImportStateVerifyIgnore: []string{"configurable_attribute", "defaulted"},
-			},
-			// Update and Read testing
-			{
-				Config: testAccExampleResourceConfig("two"),
+				Config: `
+provider "faulty" {	
+  required_boolean = true
+}
+resource "faulty_example" "test" {
+  required_boolean = true
+}
+`,
 				ConfigStateChecks: []statecheck.StateCheck{
 					statecheck.ExpectKnownValue(
-						"scaffolding_example.test",
+						"faulty_example.test",
 						tfjsonpath.New("id"),
-						knownvalue.StringExact("example-id"),
+						knownvalue.NotNull(),
 					),
 					statecheck.ExpectKnownValue(
-						"scaffolding_example.test",
-						tfjsonpath.New("defaulted"),
-						knownvalue.StringExact("example value when not configured"),
-					),
-					statecheck.ExpectKnownValue(
-						"scaffolding_example.test",
-						tfjsonpath.New("configurable_attribute"),
-						knownvalue.StringExact("two"),
+						"faulty_example.test",
+						tfjsonpath.New("required_boolean"),
+						knownvalue.Bool(true),
 					),
 				},
 			},
-			// Delete testing automatically occurs in TestCase
 		},
 	})
 }
 
-func testAccExampleResourceConfig(configurableAttribute string) string {
-	return fmt.Sprintf(`
-resource "scaffolding_example" "test" {
-  configurable_attribute = %[1]q
+func TestAccExampleResource_fail(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: `
+resource "faulty_example" "test" {
+  required_boolean = true
 }
-`, configurableAttribute)
+`,
+				ExpectError: regexp.MustCompile("Invalid provider configuration"),
+			},
+			{
+				Config: `
+provider "faulty" {
+}
+
+resource "faulty_example" "test" {
+  required_boolean = true
+}
+`,
+				ExpectError: regexp.MustCompile("Missing required argument"),
+			},
+			{
+				Config: `
+provider "faulty" {
+  required_boolean = false
+}
+
+resource "faulty_example" "test" {
+  required_boolean = true
+}
+`,
+				ExpectError: regexp.MustCompile("required_boolean_not_true"),
+			},
+			{
+				Config: `
+provider "faulty" {
+  required_boolean = true
+}
+
+resource "faulty_example" "test" {
+  required_boolean = false
+}
+`,
+				ExpectError: regexp.MustCompile("required_boolean_not_true"),
+			},
+		},
+	})
 }
