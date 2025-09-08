@@ -13,6 +13,7 @@ description: |-
 
 ```terraform
 provider "faulty" {
+  required_boolean = true
 }
 ```
 

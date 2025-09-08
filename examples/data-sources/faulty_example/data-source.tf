@@ -1,3 +1,3 @@
 data "faulty_example" "example" {
-  configurable_attribute = "some-value"
+  required_boolean = true
 }
