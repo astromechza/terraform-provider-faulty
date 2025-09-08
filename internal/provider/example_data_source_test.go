@@ -45,7 +45,7 @@ func TestAccExampleDataSource_failures(t *testing.T) {
 	}{
 		{
 			name:        "provider not present",
-			expectError: regexp.MustCompile("Invalid provider configuration"),
+			expectError: regexp.MustCompile("Missing required argument"),
 			config: `
 data "faulty_example" "test" {
   required_boolean = true

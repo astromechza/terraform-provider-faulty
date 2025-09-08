@@ -72,7 +72,7 @@ resource "faulty_example" "test" {
   required_boolean = true
 }
 `,
-				ExpectError: regexp.MustCompile("Invalid provider configuration"),
+				ExpectError: regexp.MustCompile("Missing required argument"),
 			},
 			{
 				Config: `
